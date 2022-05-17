@@ -28,7 +28,7 @@ def unit_decpmpile(apk_path, app_save_dir):
 if __name__ == '__main__':
 
     apk_dir = r'~/Documents/dataset/suyu/data/tf_apks'
-    save_dir = r'/Users/hhuu0025/PycharmProjects/guidedExplorer/data/recompiled_apks'
+    save_dir = r'~/Documents/dataset/suyu/data//recompiled_tf_apks'
 
     batch_decompile(apk_dir, save_dir)
 
