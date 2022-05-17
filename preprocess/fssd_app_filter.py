@@ -15,7 +15,7 @@ def fssd_filter():
             skip_status = False
             for file in files:
                 if 'fssd' in file:
-                    print(apk + ' ' + file + ' skip')
+                    # print(apk + ' ' + file + ' skip')
                     skip_status = True
                     break
 
@@ -37,10 +37,10 @@ def fssd_filter():
                             # if app_name is None:
                             #     print('no app name ' + apk)
                             #     continue
-                            print(app_name.text)
+                            print(apk + ' ' + app_name.text)
                             valid_apps.append(app_name.text)
                     except Exception as e:
-                        print('exception ' + apk)
+                        # print('exception ' + apk)
                         valid_app_packages.append(apk)
 
     with open(save_file, 'w', encoding='utf8') as f2:
