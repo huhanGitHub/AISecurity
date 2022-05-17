@@ -12,10 +12,15 @@ def fssd_filter():
         apk_path = os.path.join(directory, apk)
         for root, dirs, files in os.walk(apk_path):
             # filter fssd
+            skip_status = False
             for file in files:
                 if 'fssd' in file:
-                    print(apk + ' ' + file + 'skip')
+                    print(apk + ' ' + file + ' skip')
+                    skip_status = True
                     break
+
+            if skip_status:
+                break
 
             # get the app name from decompiled apk source files
             for dir in dirs:
