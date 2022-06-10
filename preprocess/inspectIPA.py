@@ -1,6 +1,6 @@
 import os
 import json
-DL_model_fields = ['.tflite', '.model', '.mlmodelc', '.mlmodel', '.pt', '.pb', '.h5']
+DL_model_fields = ['.tflite', '.model', '.mlmodelc', '.mlmodel', '.pt', '.pb', '.h5', '.tfl', 'cfg']
 
 
 def inspectAPP(src, DL_models):
