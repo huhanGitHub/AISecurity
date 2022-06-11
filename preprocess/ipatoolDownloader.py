@@ -11,10 +11,6 @@ def ipatoolDownloader(app):
     if 'Found' not in r1:
         return False
     try:
-        # '==> ℹ️	[Info] Searching for \'StuffThatWorks\' using the \'US\' store front...
-        # ==> ℹ️	[Info] Found 1 result:
-        # 1. StuffThatWorks: co.StuffThatWorks (0.8).
-        # '
         pkg = r1[r1.rindex(': ') + 2: r1.rindex(' (')].strip()
         print(pkg)
 
@@ -37,9 +33,9 @@ def ipatoolDownloader(app):
 
 
 def batch_ipatoolDownloader(json_file):
-    maximum = 50
+    maximum = 60
 
-    begin = 18
+    begin = 69
 
     # load all apps from json
     apps_json = json.load(open(json_file, 'r', encoding='utf8'))
@@ -49,7 +45,7 @@ def batch_ipatoolDownloader(json_file):
             count += 1
             continue
 
-        if count >= maximum:
+        if count >= begin + maximum:
             break
         else:
             count += 1
