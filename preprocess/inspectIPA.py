@@ -1,7 +1,7 @@
 import os
 import json
 
-DL_model_fields = ['.tflite', '.model', '.mlmodelc', '.mlmodel', '.pt', '.pb', '.h5', '.tfl', 'cfg']
+DL_model_fields = ['.tflite', '.model', '.mlmodelc', '.mlmodel', '.pt', '.pb', '.h5', '.tfl', '.cfg']
 
 
 def inspectAPP(src, DL_models):
@@ -12,6 +12,12 @@ def inspectAPP(src, DL_models):
             if suffix in DL_model_fields:
                 print('found DL model')
                 models.append(file)
+
+        for dir in dirs:
+            suffix = dir[str(dir).rfind('.'):]
+            if suffix in DL_model_fields:
+                print('found DL model')
+                models.append(dir)
 
     if len(models) > 0:
         DL_models[src] = models
@@ -61,7 +67,7 @@ if __name__ == '__main__':
     src = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/Sicoob.app'
 
     path = r'/Users/hhuu0025/Downloads/ipa_dataset/zips'
-    #batch_inspectAPP(path)
+    batch_inspectAPP(path)
 
     path2 = r'/home/suyu/Documents/dataset/Suyu/data//recompiled_tf_apks'
-    batch_inspectAPP_android(path2)
+    # batch_inspectAPP_android(path2)

@@ -2,6 +2,9 @@ import json
 
 from difflib import SequenceMatcher
 
+DL_model_fields = ['.tflite', '.model', '.mlmodelc', '.mlmodel', '.pt', '.pb', '.h5', '.tfl', '.cfg']
+DL_model_fields_count = [0,0,0,0,0,0,0,0,0]
+
 def similar(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
@@ -15,26 +18,41 @@ def generate_Android_Ios_json():
     pkg_name_pair_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/pkgs.json'
     pkg_name_pair = json.load(open(pkg_name_pair_path, 'r', encoding='utf8'))
 
-    android_models_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/androidDLmodels.csv'
-    with open(android_models_path, 'r', encoding='utf8') as f:
-        lines = f.readlines()[1:]
-        for line in lines:
-            line = line.replace('\n', '').split(',')
-            pkg = line[0]
-            name = pkg_name_pair.get(pkg, 0)
-            if name == 0:
-                continue
-            models = line[-1]
-            if ';' in models:
-                models = models.split(';')
-            else:
-                models = [models]
-            android_models.append([name, models])
+    # android_models_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/androidDLmodels.csv'
+    # with open(android_models_path, 'r', encoding='utf8') as f:
+    #     lines = f.readlines()[1:]
+    #     for line in lines:
+    #         line = line.replace('\n', '').split(',')
+    #         pkg = line[0]
+    #         name = pkg_name_pair.get(pkg, 0)
+    #         if name == 0:
+    #             continue
+    #         models = line[-1]
+    #         if ';' in models:
+    #             models = models.split(';')
+    #         else:
+    #             models = [models]
+    #         android_models.append([name, models])
+
+    android_models_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/android_models_ase.json'
+    android_models_dict = json.load(open(android_models_path, 'r', encoding='utf8'))
+
 
     # parse ios models
     ios_models_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/IOS_models_ase.json'
     ios_models_dict = json.load(open(ios_models_path, 'r', encoding='utf8'))
     ios_models = []
+
+    # count
+
+    for k, v in android_models_dict.items():
+        for vv in v:
+            suffix = vv[str(vv).rfind('.'):]
+            index = DL_model_fields.index(suffix)
+            if index != -1:
+                DL_model_fields_count[index]+=1
+
+    print(DL_model_fields_count)
 
     result_dict = {}
     for k, v in ios_models_dict.items():
@@ -51,13 +69,21 @@ def generate_Android_Ios_json():
         #             print(i)
 
         # line = app + ' | ' + android_models[max_index]
+        pair_save_path = r'../data/android_ios_model_pairs_no_fssd.txt'
+        with open(pair_save_path, 'a', encoding='utf8') as f3:
+            for i in v:
+                for kk, vv in android_models_dict.items():
+                    for ii in vv:
+                        if similar(ii, i) > 0.9:
+                            if 'fssd' in ii:
+                                continue
+                            subline1 = str(similar(ii, i)) + '---' + ii + '---' + i
+                            print(subline1)
+                            apk = kk[str(kk).rindex('/') + 1: str(kk).rindex('.apk')]
+                            subline2 = app + '---' + apk
+                            print(subline2)
+                            f3.write(subline1 + '---' + subline2 + '\n')
 
-        for i in v:
-            for j in range(len(android_models)):
-                for k in android_models[j][1]:
-                    if similar(k, i) > 0.5:
-                        print(str(similar(k, i)))
-                        print(k + '---' + i)
 
 
 

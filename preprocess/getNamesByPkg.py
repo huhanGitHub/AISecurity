@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 import json
+import os
+from inspectIPA import DL_model_fields
 
 
 def findNamesFromApkpure(pkg):
@@ -49,8 +51,68 @@ def androidIosPair():
             f2.write(all_app + '\n')
 
 
+def get_app_name_pkg():
+    # directory = r'/home/suyu/Documents/dataset/Suyu/data//recompiled_tf_apks'
+    directory = r'/Users/hhuu0025/PycharmProjects/guidedExplorer/data/recompiled_apks'
+    save_file = r'../data/android_apps_with_models.txt'
+    failed_pkg = r'../data/failed_android_pkg_with_models.txt'
+    valid_apps = {}
+    valid_app_packages = []
+    for apk in os.listdir(directory):
+        apk_path = os.path.join(directory, apk)
+        skip_status = True
+        models = []
+        for root, dirs, files in os.walk(apk_path):
+            # filter models
+            for file in files:
+                suffix = file[str(file).rfind('.'):]
+                if suffix in DL_model_fields:
+                    print('found DL model')
+                    models.append(file)
+                    skip_status = False
+
+        if skip_status:
+            continue
+
+        for root, dirs, files in os.walk(apk_path):
+            # get the app name from decompiled apk source files
+            for dir in dirs:
+                # print(dir)
+                if dir == 'values':
+                    try:
+                        # strings = dir_path + '//res/values/strings.xml'
+                        strings = os.path.join(root, dir, 'strings.xml')
+                        with open(strings, 'r') as f:
+                            # lines = f.readlines()
+                            # content = ' '.join(lines)
+                            content = f.read()
+                            soup = BeautifulSoup(content, 'lxml')
+                            app_name = soup.find('string', {"name": "app_name"})
+                            # if app_name is None:
+                            #     print('no app name ' + apk)
+                            #     continue
+                            name = app_name.text
+                            print(apk + ' ' + name)
+                            valid_apps[name] = models
+                    except Exception as e:
+                        print('exception ' + apk)
+                        if not skip_status:
+                            valid_app_packages.append(apk)
+
+    with open(save_file, 'w', encoding='utf8') as f2:
+        print('total apps: ' + str(len(valid_apps.keys())))
+        json_valid = json.dumps(valid_apps)
+        f2.write(json_valid)
+
+    with open(failed_pkg, 'w', encoding='utf8') as f3:
+        for pkg in valid_app_packages:
+            f3.write(pkg + '\n')
+
+
 if __name__ == '__main__':
     pkg = 'com.skype.raider'
     # findNamesFromApkpure(pkg)
 
-    androidIosPair()
+    # androidIosPair()
+
+    get_app_name_pkg()
