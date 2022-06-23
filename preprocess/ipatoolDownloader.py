@@ -21,7 +21,8 @@ def ipatoolDownloader(app, save_dir=r'../data/ipas_all/'):
             print('purchased before or purchase fail, skip')
             return False
 
-        cmd3 = 'ipatool download --bundle-identifier ' + pkg + ' -o ' + save_dir
+        # save ipa files to 'app'.zip
+        cmd3 = 'ipatool download --bundle-identifier ' + pkg + ' -o ' + save_dir + app + '.zip'
         p3 = subprocess.Popen(cmd3, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf-8')
         r3 = p3.stdout.read()
         if 'Done' not in r3:
