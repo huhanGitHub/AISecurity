@@ -3,7 +3,9 @@ import json
 from plistlib import load, FMT_XML
 DL_model_fields = ['.tflite', '.model', '.mlmodelc', '.mlmodel', '.pt', '.pb', '.h5', '.tfl', '.cfg', '.caffemodel', '.feathermodel', '.pkl', '.chainermodel']
 DL_model_fields_count = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
+from ipatoolDownloader import ipatoolDownloader
+import zipfile
+import shutil
 
 def inspectAPP(src, DL_models):
     models = []
@@ -73,6 +75,46 @@ def batch_inspectAPP_android(path):
 
     if org_models:
         DL_models = org_models | DL_models
+    json_str = json.dumps(DL_models)
+    with open(save_json, 'w', encoding='utf8') as f2:
+        f2.write(json_str)
+
+
+def downloadInspectFilter(app, DL_models, save_dir=r'../data/topAppleApps'):
+    downloadStatus = ipatoolDownloader(app, save_dir)
+    if not downloadStatus:
+        print('download ' + app + ' failed')
+        return False
+
+    IPA_path = save_dir + app
+    # unzip ipa
+    with zipfile.ZipFile(IPA_path + '.zip', 'r') as zip_ref:
+        zip_ref.extractall(IPA_path)
+
+    # inspect dl models
+    app_DL_models = []
+    inspectAPP(IPA_path, app_DL_models)
+    if len(app_DL_models) != 0:
+        print('find DL model in ' + app)
+        DL_models.extend(app_DL_models)
+
+    else:
+        print('cannot find DL model in ' + app + ' , delete')
+        shutil.rmtree(IPA_path)
+        os.remove(IPA_path + '.zip')
+
+
+def batch_downloadInspectFilter(app_list):
+    save_dir = r'../data/topAppleApps'
+    save_json = r'../data/android_models_all.json'
+    DL_models = []
+    apps = open(app_list, 'r', encoding='utf8').readlines()
+    apps = [i.replace('\n', '').strip() for i in apps]
+    for app in apps:
+        if 'category: ' in app:
+            continue
+        downloadInspectFilter(app, DL_models, save_dir)
+
     json_str = json.dumps(DL_models)
     with open(save_json, 'w', encoding='utf8') as f2:
         f2.write(json_str)

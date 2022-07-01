@@ -1,5 +1,6 @@
 import json
-
+import matplotlib.pyplot as plt
+import numpy as np
 from difflib import SequenceMatcher
 
 DL_model_fields = ['.tflite', '.model', '.mlmodelc', '.mlmodel', '.pt', '.pb', '.h5', '.tfl', '.cfg']
@@ -122,11 +123,35 @@ def paired_model_analysis(path):
 
 
 
+def model_count_analysis():
+    path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/IOS_models_all.json'
+    android_models_dict = json.load(open(path, 'r', encoding='utf8'))
+    ratio = []
+
+    for k, v in android_models_dict.items():
+        if len(v) > 50:
+            continue
+        ratio.append(len(v) - 2)
+
+    ratio = np.array(ratio)
+    fig = plt.figure(figsize=(10, 7))
+
+    # Creating plot
+    plt.boxplot(ratio)
+
+    # show plot
+    plt.show()
+
+
+
+
 if __name__ == '__main__':
     # generate_Android_Ios_json()
     # count_android_apps()
 
     all_path = r'../data/android_ios_model_pairs_all.txt'
     same_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/sameDLsameApp'
-    paired_model_analysis(all_path)
-    paired_model_analysis(same_path)
+    # paired_model_analysis(all_path)
+    # paired_model_analysis(same_path)
+
+    model_count_analysis()
