@@ -7,6 +7,7 @@ from ipatoolDownloader import ipatoolDownloader
 import zipfile
 import shutil
 
+
 def inspectAPP(src, DL_models):
     models = []
     for root, dirs, files in os.walk(src):
@@ -81,15 +82,15 @@ def batch_inspectAPP_android(path):
 
 
 def downloadInspectFilter(app, DL_models, save_dir=r'../data/topAppleApps'):
-    downloadStatus = ipatoolDownloader(app, save_dir)
+    downloadStatus, output_file = ipatoolDownloader(app, save_dir)
     if not downloadStatus:
         print('download ' + app + ' failed')
         return False
 
-    IPA_path = save_dir + app
+    IPA_path = output_file
     # unzip ipa
-    with zipfile.ZipFile(IPA_path + '.zip', 'r') as zip_ref:
-        zip_ref.extractall(IPA_path)
+    with zipfile.ZipFile(IPA_path, 'r') as zip_ref:
+        zip_ref.extractall(IPA_path[:-4])
 
     # inspect dl models
     app_DL_models = []
@@ -100,20 +101,46 @@ def downloadInspectFilter(app, DL_models, save_dir=r'../data/topAppleApps'):
 
     else:
         print('cannot find DL model in ' + app + ' , delete')
-        shutil.rmtree(IPA_path)
-        os.remove(IPA_path + '.zip')
+        shutil.rmtree(IPA_path[:-4])
+        os.remove(IPA_path)
+
+    return True
 
 
 def batch_downloadInspectFilter(app_list):
-    save_dir = r'../data/topAppleApps'
-    save_json = r'../data/android_models_all.json'
+    save_dir = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps'
+    save_json = r'../data/android_models_top.json'
     DL_models = []
+    # log 0: downloaded, checked; 1: download fail
+    download_log = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/top_apps.log'
+
     apps = open(app_list, 'r', encoding='utf8').readlines()
     apps = [i.replace('\n', '').strip() for i in apps]
-    for app in apps:
-        if 'category: ' in app:
-            continue
-        downloadInspectFilter(app, DL_models, save_dir)
+    count = 0
+    begin = 255
+    max_download = 100
+
+    with open(download_log, 'a', encoding='utf8') as log:
+        for index, app in enumerate(apps):
+            app = app.replace(' ', '_')
+            app = app.replace('&', '7')
+            if index < begin:
+                continue
+
+            if count >= max_download:
+                print('download ' + str(max_download) + ' , stop')
+                return
+
+            if 'category: ' in app:
+                continue
+
+            status = downloadInspectFilter(app, DL_models, save_dir)
+            if status:
+                count += 1
+                log.write(app + '---' + str(1) + '\n')
+                print('count: ' + str(count))
+            else:
+                log.write(app + '---' + str(0) + '\n')
 
     json_str = json.dumps(DL_models)
     with open(save_json, 'w', encoding='utf8') as f2:
@@ -124,7 +151,10 @@ if __name__ == '__main__':
     src = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/Sicoob.app'
 
     path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/ipas_all'
-    batch_inspectAPP(path)
+    # batch_inspectAPP(path)
 
     path2 = r'/home/suyu/Documents/dataset/Suyu/data//recompiled_tf_apks'
     # batch_inspectAPP_android(path2)
+
+    top_app_list = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/topAppleApps.txt'
+    batch_downloadInspectFilter(top_app_list)
