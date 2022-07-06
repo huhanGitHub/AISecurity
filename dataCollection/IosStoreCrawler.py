@@ -1,8 +1,7 @@
-import re
 from bs4 import BeautifulSoup
 import requests
 import json
-from compareModels import similar
+from modelComparator.compareModelNames import similar
 
 # https://www.apple.com/au/search/image?sel=explore&src=globalnav&tab=explore&page=1
 def crawler_app_store(target):

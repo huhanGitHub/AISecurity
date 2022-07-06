@@ -3,6 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 import zipfile
+import re
 
 
 # note that you must login via the terminal before download ipas. The login token will expire after about 1 hour.
@@ -26,8 +27,16 @@ def ipatoolDownloader(app, save_dir=r'../data/ipas_all/'):
         #     return False, output_file
 
         # save ipa files to 'app'.zip
-        app = app.replace('\\ ', '_')
-        app = app.replace('&', '7')
+        # app = app.replace('\\ ', '_')
+        # app = app.replace('\\.', 'a')
+        # app = app.replace(':', 'b')
+        # app = app.replace('&', 'c')
+        # app = app.replace('/', 'd')
+        # app = app.replace(',', 'e')
+
+        # replace all uncommon chars to 'a'
+        app = re.sub('[^0-9a-zA-Z]+', 'a', app)
+
         output_file = save_dir + '/' + app + '.zip'
         path = Path(output_file)
         if path.is_file():
@@ -138,3 +147,4 @@ if __name__ == '__main__':
     # save_dir = r'../data/topAppleApps/'
     save_dir = r'/Volumes/daneimiji/IphoneApps/topRatedApps/'
     batch_ipatoolDownloader_txt(txt_path, save_dir)
+
