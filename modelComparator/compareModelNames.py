@@ -143,6 +143,52 @@ def model_count_analysis():
     plt.show()
 
 
+def match_android_ios_app_with_models():
+    path1 = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/android_apps_with_models_all.json'
+    path2 = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/IOS_models_all.json'
+    save = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/android_IOS_models_all.json'
+    same_app_models = {}
+    android_app_models = json.load(open(path1, 'r', encoding='utf8'))
+    ios_app_models = json.load(open(path2, 'r', encoding='utf8'))
+    a=0
+    b=0
+    c=0
+    for k1, v1 in android_app_models.items():
+        for k2, v2 in ios_app_models.items():
+            k2_name = v2[-2]
+            similarity = similar(k1, k2_name)
+            if similarity > 0.8:
+                models = []
+                print(k1 + '---' + k2_name)
+                models.append('android')
+                models.extend(v1)
+                models.append('ios')
+                ios_models = v2[:-2]
+                ios_models = [str(i).lower() for i in ios_models]
+                an_models = [str(i).lower() for i in v1]
+                models.extend(v2[:-2])
+
+                same_models = set(an_models) & set(ios_models)
+                if len(same_models) == 0:
+                    print('no same')
+                    models.append('no same')
+                    a += 1
+                elif len(same_models) == len(v1) and len(same_models) == len(ios_models):
+                    print('all the same')
+                    models.append('all same')
+                    print(k1)
+                    b += 1
+                else:
+                    print('partly same')
+                    models.append('partly same')
+                    c += 1
+
+                same_app_models[k1] = models
+
+    print(a, b, c)
+
+    with open(save, 'a', encoding='utf8') as f:
+        f.write(json.dumps(same_app_models, indent=4))
 
 
 if __name__ == '__main__':
@@ -154,4 +200,6 @@ if __name__ == '__main__':
     # paired_model_analysis(all_path)
     # paired_model_analysis(same_path)
 
-    model_count_analysis()
+    #model_count_analysis()
+
+    match_android_ios_app_with_models()

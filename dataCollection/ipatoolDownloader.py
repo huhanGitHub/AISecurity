@@ -132,7 +132,8 @@ def batch_ipatoolDownloader_txt(txt_file, save_dir):
                     zip_ref.extractall(extracted_app)
 
                 count += 1
-                print('------------IPA downloader: ' + str(i) + ' ' + modified_app + ' ' + str(status) + ' ' + str(count)+'\n')
+                print('------------IPA downloader: ' + str(len(downloaded_app_list) + count) + ' ' + modified_app + ' '
+                      + str(status) + ' ' + str(count)+'\n')
                 log.write(app + '\n')
 
 
