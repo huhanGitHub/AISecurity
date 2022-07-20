@@ -1,4 +1,8 @@
+from bs4 import BeautifulSoup
+import requests
 import json
+from modelComparator.compareModelNames import similar
+from urllib.request import urlopen, Request
 
 
 def analysis():
@@ -45,13 +49,163 @@ def analysis():
         print(k + ' ' + str(v))
 
 
-#[3.7, 4.3, 4.4, 4.4, 4.8, 4.6, 4.7, 4.7, 4.8, 4.7, 4.7, 4.3, 4.7, 4.8, 4.7, 4.8, 4.5, 4.6, 4.7, 4.4, 4.8, 4.2, 4.9, 4.1, 4.2, 3.0, 3.2, 4.6, 4.5, 4.6, 3.6, 4.8, 4.6, 4.7, 3.2, 4.5, 3.9, 4.7, 4.5, 2.9, 4.8, 4.9, 4.3, 1.5, 4.3, 4.0, 4.2, 4.8, 4.6, 1.9, 4.0, 4.7, 4.8, 4.5, 4.4, 2.4, 4.5, 4.3, 4.8, 4.9, 2.9, 4.6, 4.8, 4.8, 4.3]
-#[284.2, 214.3, 115.9, 475.0, 49.8, 54.1, 246.3, 453.7, 334.5, 299.4, 49.5, 115.7, 238.3, 243.9, 3800.0, 72.7, 191.7, 324.2, 272.5, 220.4, 170.5, 92.4, 127.1, 178.3, 212.7, 93.6, 110.9, 174.7, 218.1, 211.8, 166.5, 36.9, 174.8, 88.5, 137.4, 127.6, 115.4, 87.7, 324.6, 249.4, 288.4, 74.2, 170.2, 179.4, 188.8, 108.0, 184.7, 64.9, 285.8, 42.5, 50.1, 667.4, 161.2, 253.0, 174.6, 350.8, 79.7, 262.2, 70.1, 264.8, 788.1, 490.0, 55.4, 307.9, 109.6]
-#1, 1, 1, 5.3, 62.4, 1, 69.8, 28.5, 651.3, 1000, 80.1, 1, 1000, 118.8, 2.9, 24.1, 1.4, 7.7, 17.0, 28.8, 8.0, 1, 419.9, 1, 11.9, 1, 1, 57.5, 1, 31.5, 1, 25.3, 113.9, 1.3, 1, 41.1, 1, 1.6, 447.2, 1, 1000, 1, 67.9, 1, 1.2, 4.9, 2.7, 1000, 580.5, 1, 1, 1.3, 1, 456.9, 28.2, 6.1, 632.1, 7.0, 4.5, 23.4, 5.7, 204.9, 40.2, 115.3, 1
+def iosMetaDataCrawler():
+    ios_app_models_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/IOS_models_all.json'
+    ios_app_models = json.load(open(ios_app_models_path, 'r', encoding='utf8'))
+    ios_apps = ios_app_models.keys()
+    print(len(ios_apps))
+
+    ios_apps_metadata = {}
+    for k, v in ios_app_models.items():
+        app_name = v[-1]
+        bundleDisplayName = v[-2]
+        url = 'https://www.apple.com/search/' + bundleDisplayName + '?sel=explore&src=globalnav&tab=explore&page=1'
+        get_html = requests.get(url)
+        soup = BeautifulSoup(get_html.text, 'html.parser')
+        # products = soup.find_all('div', {"class": "rf-serp-product-description"})
+        apps = soup.find_all('h2', {"class": "rf-serp-productname"})
+
+        if len(apps) == 0:
+            print(app_name + ' skip')
+            continue
+
+        app_ios = []
+        for app in apps:
+            # print(str(app.text).strip())
+            value = str(app.text).strip()
+            value = value.encode().decode('unicode-escape')
+            app_ios.append(value)
+
+        similarities = [similar(app_name, i) for i in app_ios]
+        index = similarities.index(max(similarities))
+        app_link = soup.find_all('div', {"class": "rf-serp-product-description"})[index].find('a', href=True)
+        print(app_link['href'])
+
+        get_html2 = requests.get(app_link['href'])
+        soup2 = BeautifulSoup(get_html2.text, 'html.parser')
+
+        ratings = soup2.find('figcaption', {"class": "we-rating-count star-rating__count"})
+        ratings_tmp = ratings.text.split(' ')
+
+        atr = {}
+
+        score = ratings_tmp[0]
+        number = ratings_tmp[2]
+        atr['score'] = score
+        atr['number'] = number
+
+        descs = soup2.find_all('div', {"class": "information-list__item l-column small-12 medium-6 large-4 small-valign-top"})
+        for desc in descs:
+            dt = desc.find('dt').text.replace('\n', '').strip()
+            dd = desc.find('dd').text.replace('\n', '').strip()
+            atr[dt] = dd
+            print('dt: ' + dt + ' dd: ' + dd)
+
+        ios_apps_metadata[app_name] = atr
+
+    save_path = r'../data/ios_app_metadata.json'
+    with open(save_path, 'a', encoding='utf8') as f:
+        f.write(json.dumps(ios_apps_metadata))
 
 
+def iosMetaDataCrawler_list():
+    ios_app_models_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/final_data/ios_apps_model_final.txt'
+    ios_apps = open(ios_app_models_path, 'r', encoding='utf8').readlines()
+    ios_apps = [i.replace('\n', '') for i in ios_apps]
+    print(len(ios_apps))
 
+    ios_apps_metadata = {}
+    explored_links = []
+    failed_app = []
+    for index, app in enumerate(ios_apps):
+        if index < 0:
+            continue
+        org_app = app
+        if ':' in app:
+            app = app.split(':')[0].strip()
+        if ' - ' in app:
+            app = app.split(' : ')[0].strip()
+        app = app.split(' ')
+        if len(app) > 2:
+            app = ' '.join(app[:2]).strip()
+        else:
+            app = ' '.join(app).strip()
+
+        app = app.replace(' ', '-')
+        url = 'https://www.apple.com/us/search/' + app + '?src=serp'
+        headers = {'User-Agent': 'Mozilla/5.0', 'Content-Type': 'text/html; charset=utf-8'}
+        req = Request(url, headers=headers)
+        # search app
+        try:
+            get_html = urlopen(req)
+        except UnicodeEncodeError as e:
+            print(str(index) + ' ' + app + ' ' + str(e) + ' ' + url)
+            continue
+        get_html = get_html.read().decode('utf-8')
+        # get_html = requests.get(url)
+        soup = BeautifulSoup(get_html, 'html.parser')
+        # products = soup.find_all('div', {"class": "rf-serp-product-description"})
+        apps_tag = soup.find_all('h2', {"class": "rf-serp-productname"})
+
+        if len(apps_tag) == 0:
+            print(str(index) + ' ' + app + ' skip ' + url)
+            failed_app.append(app)
+            continue
+
+        app_ios = []
+        for app_tag in apps_tag:
+            # print(str(app.text).strip())
+            value = str(app_tag.text).strip()
+            value = value.encode().decode('unicode-escape')
+            app_ios.append(value)
+
+        similarities = [similar(org_app, i) for i in app_ios]
+        index = similarities.index(max(similarities))
+        #index = 0
+        app_link = soup.find_all('div', {"class": "rf-serp-product-description"})[index].find('a', href=True)
+        # print(app_link['href'])
+        if app_link['href'] not in explored_links:
+            explored_links.append(app_link['href'])
+        else:
+            print(app + 'explored ' + url)
+            continue
+
+        get_html2 = requests.get(app_link['href'])
+        soup2 = BeautifulSoup(get_html2.text, 'html.parser')
+
+        ratings = soup2.find('figcaption', {"class": "we-rating-count star-rating__count"})
+        if ratings is None:
+            ratings_tmp = [-1, -1, -1]
+        else:
+            ratings_tmp = ratings.text.split(' ')
+
+        atr = {}
+
+        score = ratings_tmp[0]
+        number = ratings_tmp[2]
+        atr['score'] = score
+        atr['number'] = number
+
+        descs = soup2.find_all('div', {"class": "information-list__item l-column small-12 medium-6 large-4 small-valign-top"})
+        for desc in descs:
+            dt = desc.find('dt').text.replace('\n', '').strip()
+            dd = desc.find('dd').text.replace('\n', '').strip()
+            atr[dt] = dd
+            # print('dt: ' + dt + ' dd: ' + dd)
+
+        ios_apps_metadata[app] = atr
+
+    save_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/final_data/ios_apps_model_metadata_final.json'
+    # print(failed_app)
+    with open(save_path, 'w', encoding='utf8') as f:
+        f.write(json.dumps(ios_apps_metadata, indent=4))
+
+    failed_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/final_data/failed_ios_apps_model_metadata_final.txt'
+    with open(failed_path, 'w', encoding='utf8') as f:
+        for fa in failed_app:
+            f.write(fa + '\n')
 
 
 if __name__ == '__main__':
-    analysis()
+    #analysis()
+    iosMetaDataCrawler_list()

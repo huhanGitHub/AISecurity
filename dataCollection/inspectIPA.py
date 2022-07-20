@@ -41,6 +41,33 @@ def inspectAPP(src, DL_models):
         DL_models[src] = models
 
 
+def inspectAPP_android(src, DL_models):
+    models = []
+    for root, dirs, files in os.walk(src):
+        for file in files:
+            suffix = file[str(file).rfind('.'):]
+            if suffix in DL_model_fields:
+                print('found DL model')
+                index = DL_model_fields.index(suffix)
+                models.append(file)
+                DL_model_fields_count[index] += 1
+
+        for dir in dirs:
+            suffix = dir[str(dir).rfind('.'):]
+            if suffix in DL_model_fields:
+                print('found DL model')
+                models.append(dir)
+                index = DL_model_fields.index(suffix)
+                DL_model_fields_count[index] += 1
+
+    if len(models) > 0:
+        app_name = src[str(src).rindex('/') +1: ]
+        models.append(app_name)
+        models.append(app_name)
+        DL_models[src] = models
+
+
+
 def batch_inspectAPP(path):
     DL_models = {}
     save_json = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/ios_models_top.json'
@@ -66,19 +93,19 @@ def batch_inspectAPP(path):
 
 def batch_inspectAPP_android(path):
     DL_models = {}
-    save_json = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/ios_models_top.json'
+    save_json = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/final_data/android_models_top.json'
     org_models = {}
     for dir in os.listdir(path):
         app_path = os.path.join(path, dir)
         print(app_path)
-        inspectAPP(app_path, DL_models)
+        inspectAPP_android(app_path, DL_models)
 
-    if os.path.exists(save_json):
-        with open(save_json, 'r', encoding='utf8') as f:
-            org_models = json.load(f)
-
-        if org_models:
-            DL_models = org_models | DL_models
+    # if os.path.exists(save_json):
+    #     with open(save_json, 'r', encoding='utf8') as f:
+    #         org_models = json.load(f)
+    #
+    #     if org_models:
+    #         DL_models = org_models | DL_models
     json_str = json.dumps(DL_models, indent=4)
 
     print('total apps with models: ' + str(len(DL_models.keys())))
@@ -173,11 +200,11 @@ if __name__ == '__main__':
     path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/ipas_all'
     # batch_inspectAPP(path)
 
-    path2 = r'/Volumes/daneimiji/IphoneApps/topRatedApps/extracted_ipas'
-    # batch_inspectAPP_android(path2)
+    path2 = r'/Volumes/daneimiji/AndroidApps/topRatedApps/extracted/'
+    batch_inspectAPP_android(path2)
     # batch_inspectAPP(path2)
 
     top_app_list = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/topAppleApps.txt'
     # batch_downloadInspectFilter(top_app_list)
 
-    read_json2list(r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/ios_models_top.json')
+    # read_json2list(r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/ios_models_top.json')

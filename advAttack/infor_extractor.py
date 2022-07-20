@@ -19,7 +19,7 @@ numpy.set_printoptions(threshold=sys.maxsize)
 start_time = time.time()
 
 # the csv file for recording
-csv_file = "/Users/hhuu0025/Downloads/adversarialAttack/models/model_info.csv"
+csv_file = "/Users/hhuu0025/PycharmProjects/AISecurity/advAttack/data/model_info.csv"
 f = open(csv_file, "a", newline='')
 writer = csv.DictWriter(
     f, fieldnames=["index", "layer", "shape", "data_type"])
@@ -28,7 +28,7 @@ writer.writeheader()
 row_writer = csv.writer(f)
 
 model = "gender_nn"
-model_path = r'/Users/hhuu0025/Downloads/adversarialAttack/models/gender_nn.tflite'
+model_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/advAttack/models/gender_nn.tflite'
 interpreter = tf.lite.Interpreter(model_path)
 interpreter.allocate_tensors()
 details = interpreter.get_tensor_details()
@@ -39,7 +39,7 @@ for detail in tqdm(details):
 
     parameter = interpreter.get_tensor(detail['index'])
 
-    save_dir = r'/Users/hhuu0025/Downloads/adversarialAttack/models/' + model
+    save_dir = r'/Users/hhuu0025/PycharmProjects/AISecurity/advAttack/models/' + model
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
 

@@ -9,19 +9,64 @@ class Net(nn.Module):
     # define nn
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(784, 512)
-        self.fc2 = nn.Linear(512, 10)
-        self.dropout1 = nn.Dropout(0.2)
 
-    def forward(self, X):
-        # print(X.shape)
-        X = X.reshape(-1, 784)
-        # print(X.shape)
-        X = F.relu(self.fc1(X))
-        X = self.dropout1(X)
-        X = self.fc2(X)
+        self.conv1 = nn.Conv2d(1, 128, 128, 3)
+        self.pool1 = nn.MaxPool2d(1, 8, 8, 256)
+        self.conv2 = nn.Conv2d(1, 64, 64, 32)
 
-        return X
+        self.conv3 = nn.Conv2d(1, 64, 64, 32)
+        self.conv4 = nn.Conv2d(256, 3, 3, 128)
+
+        self.fc1 = nn.Linear(1, 256)
+        # self.softmax = nn.Softmax(1, 2)
+        self.bn = nn.BatchNorm2d(1, 64, 64, 32)
+
+    def forward(self, x):
+        x1 = x
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.conv2(x)
+
+        x1 = F.relu(self.conv1(x1))
+        x1 = F.relu(self.conv2(x1))
+        x1 = self.conv2(x1)
+
+        x = torch.add(x, x1)
+        x = F.relu(self.bn(x))
+
+
+        x = F.relu(self.conv2(x))
+        x = self.conv2(x)
+        x = F.relu(self.bn(x))
+
+        x = self.conv3(x)
+        x = F.relu(self.conv2(x))
+        x = self.conv2(x)
+        x = F.relu(self.bn(x))
+
+        x = F.relu(self.conv2(x))
+        x = self.conv2(x)
+        x = F.relu(self.bn(x))
+
+        x = self.conv3(x)
+        x = F.relu(self.conv2(x))
+        x = self.conv2(x)
+        x = F.relu(self.bn(x))
+
+        x = F.relu(self.conv2(x))
+        x = self.conv2(x)
+        x = F.relu(self.bn(x))
+
+        x = self.conv4(x)
+
+        x = self.pool1(x)
+
+        x = self.fc1(x)
+
+        x = self.softmax(x)
+        # x = x.view(-1, 16 * 5 * 5)
+
+        return x
 
 #Define normalization
 transform=transforms.Compose([transforms.ToTensor()])
@@ -48,7 +93,7 @@ model = Net()
 parameters_dict = {}
 
 for i in range(4):
-    file1 = open('./my_model/' + str(i+1) + '_para.txt', 'r')
+    file1 = open('./models/gender_nn/' + str(i+1) + '_para.txt', 'r')
     Lines = file1.readlines()
 
     count = 0
@@ -57,7 +102,7 @@ for i in range(4):
     for line in Lines:
         # count += 1
         # print("Line{}: {}".format(count, line.strip()))
-        parameters = line.replace('[','').replace(']','').split()
+        parameters = line.replace('[', '').replace(']', '').split()
         # print(parameters)
         for record in parameters:
             parameters_list.append(float(record))

@@ -34,7 +34,7 @@ def searchByName_apkpure(app_name):
         ul = soup2.find('ul', {"class": "ver-wrap"})
         versions = ul.find_all('li')
         url3 = ''
-        for version in versions:
+        for index, version in enumerate(versions):
             xapk = version.find('span', {"class": "ver-item-t ver-xapk"})
             # download 'apk'
             if xapk is None:
@@ -42,12 +42,18 @@ def searchByName_apkpure(app_name):
                 url3 = server_addr + apk_link
                 break
 
-        # find click download
-        req3 = Request(url3, headers=headers)
-        get_html3 = urlopen(req3).read()
-        get_html3 = get_html3.decode('utf-8')
-        soup3 = BeautifulSoup(get_html3, 'html.parser')
-        download_link = soup3.find('a', {"id": "download_link"})['href']
+        if url3 == '':
+            print('no apk version, download xapk instead')
+            apk_link = versions[0].find('a')['href']
+            url3 = server_addr + apk_link
+            download_link = xapk_downloader(url3, headers, server_addr)
+        else:
+            # find click download
+            req3 = Request(url3, headers=headers)
+            get_html3 = urlopen(req3).read()
+            get_html3 = get_html3.decode('utf-8')
+            soup3 = BeautifulSoup(get_html3, 'html.parser')
+            download_link = soup3.find('a', {"id": "download_link"})['href']
     except Exception as e:
         print(str(e))
         return False
@@ -58,10 +64,11 @@ def searchByName_apkpure(app_name):
 def url_downloader(url, app_name, save_dir):
     try:
         req = Request(url)
-        req.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36')
+        req.add_header('User-Agent',
+                       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36')
         save_path = os.path.join(save_dir, app_name + '.zip')
         if os.path.exists(save_path):
-            print(app_name+' has been downloaded')
+            print(app_name + ' has been downloaded')
             return save_path
         response = urlopen(req).read()
         open(save_path, 'wb').write(response)
@@ -70,6 +77,23 @@ def url_downloader(url, app_name, save_dir):
         return False
 
     return save_path
+
+
+def xapk_downloader(url3, headers, server_addr):
+    req3 = Request(url3, headers=headers)
+    get_html3 = urlopen(req3).read()
+    get_html3 = get_html3.decode('utf-8')
+    soup3 = BeautifulSoup(get_html3, 'html.parser')
+    apk_link = soup3.find('a', text="Download XAPK")['href']
+
+    url4= server_addr + apk_link
+    # find click download
+    req4 = Request(url4, headers=headers)
+    get_html4 = urlopen(req4).read()
+    get_html4 = get_html4.decode('utf-8')
+    soup4 = BeautifulSoup(get_html4, 'html.parser')
+    download_link = soup4.find('a', {"id": "download_link"})['href']
+    return download_link
 
 
 def zip_extractor(zip_path, save_dir):
@@ -81,7 +105,7 @@ def zip_extractor(zip_path, save_dir):
         zip_ref.extractall(extracted_app)
 
 
-def find_android_app(app_name, save_dir):
+def find_android_app(app_name, save_dir, extracted=True):
     url = searchByName_apkpure(app_name)
     if url is False:
         return False
@@ -89,20 +113,21 @@ def find_android_app(app_name, save_dir):
     if zip_path is False:
         return False
     extracted_app_dir = save_dir[:-4] + 'extracted'
-    zip_extractor(zip_path, extracted_app_dir)
+    if extracted:
+        zip_extractor(zip_path, extracted_app_dir)
     return True
 
 
-def batch_find_android_app(app_list, save_dir):
+def batch_find_android_app(app_list, save_dir, extracted=True):
     apps = []
     with open(app_list, 'r', encoding='utf8') as f:
         apps = f.readlines()
         apps = [i.replace('\n', '') for i in apps]
 
-    failed_app_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/failed_Android_apps.txt'
+    failed_app_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/failed_Android_apps2.txt'
     with open(failed_app_path, 'a', encoding='utf8') as f1:
         for index, app in enumerate(apps):
-            status = find_android_app(app, save_dir)
+            status = find_android_app(app, save_dir, extracted=extracted)
             if not status:
                 f1.write(app + '\n')
             print(str(status) + ' ' + app + ' ' + str(index))
@@ -110,8 +135,8 @@ def batch_find_android_app(app_list, save_dir):
 
 if __name__ == '__main__':
     app_name = 'Webex Meetings'
-    save_dir = r'/Volumes/daneimiji/AndroidApps/topRatedApps/zips'
+    save_dir = r'/Volumes/daneimiji/AndroidApps/topRatedApps/tempApk'
     # find_android_app(app_name, save_dir)
     # searchByName_apkpure(app_name)
-    app_list = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/iosAppModels.txt'
-    batch_find_android_app(app_list, save_dir)
+    app_list = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/topAppleApps/failed_Android_apps.txt'
+    batch_find_android_app(app_list, save_dir, extracted=False)

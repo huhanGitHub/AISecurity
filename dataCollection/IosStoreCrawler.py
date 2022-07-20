@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 import json
 from modelComparator.compareModelNames import similar
+from urllib.request import urlopen, Request
+
 
 # https://www.apple.com/au/search/image?sel=explore&src=globalnav&tab=explore&page=1
 def crawler_app_store(target):
@@ -75,63 +77,7 @@ def convertJson2text():
             f.write(line + '\n')
 
 
-def iosMetaDataCrawler():
-    ios_app_models_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/IOS_models_all.json'
-    ios_app_models = json.load(open(ios_app_models_path, 'r', encoding='utf8'))
-    ios_apps = ios_app_models.keys()
-    print(len(ios_apps))
 
-    ios_apps_metadata = {}
-    for k, v in ios_app_models.items():
-        app_name = v[-1]
-        bundleDisplayName = v[-2]
-        url = 'https://www.apple.com/search/' + bundleDisplayName + '?sel=explore&src=globalnav&tab=explore&page=1'
-        get_html = requests.get(url)
-        soup = BeautifulSoup(get_html.text, 'html.parser')
-        # products = soup.find_all('div', {"class": "rf-serp-product-description"})
-        apps = soup.find_all('h2', {"class": "rf-serp-productname"})
-
-        if len(apps) == 0:
-            print(app_name + ' skip')
-            continue
-
-        app_ios = []
-        for app in apps:
-            # print(str(app.text).strip())
-            value = str(app.text).strip()
-            value = value.encode().decode('unicode-escape')
-            app_ios.append(value)
-
-        similarities = [similar(app_name, i) for i in app_ios]
-        index = similarities.index(max(similarities))
-        app_link = soup.find_all('div', {"class": "rf-serp-product-description"})[index].find('a', href=True)
-        print(app_link['href'])
-
-        get_html2 = requests.get(app_link['href'])
-        soup2 = BeautifulSoup(get_html2.text, 'html.parser')
-
-        ratings = soup2.find('figcaption', {"class": "we-rating-count star-rating__count"})
-        ratings_tmp = ratings.text.split(' ')
-
-        atr = {}
-
-        score = ratings_tmp[0]
-        number = ratings_tmp[2]
-        atr['score'] = score
-        atr['number'] = number
-
-        descs = soup2.find_all('div', {"class": "information-list__item l-column small-12 medium-6 large-4 small-valign-top"})
-        for desc in descs:
-            dt = desc.find('dt').text.replace('\n', '').strip()
-            dd = desc.find('dd').text.replace('\n', '').strip()
-            atr[dt] = dd
-            print('dt: ' + dt + ' dd: ' + dd)
-
-        ios_apps_metadata[app_name] = atr
-
-    save_path = r'../data/ios_app_metadata.json'
-    with open(save_path, 'a', encoding='utf8') as f:
-        f.write(json.dumps(ios_apps_metadata))
 
 
 def topFreeAppCrawler():
@@ -201,9 +147,9 @@ if __name__ == '__main__':
 
     # app_list_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/valid_apps.txt'
     app_list_path = r'/Users/hhuu0025/PycharmProjects/AISecurity/data/all_apps.txt'
-    app_list = read_app_list(app_list_path)
+    #app_list = read_app_list(app_list_path)
 
     # batch_crawler_app_store(app_list, save_path)
-    # iosMetaDataCrawler()
+    iosMetaDataCrawler_list()
 
-    topFreeAppCrawler()
+    #topFreeAppCrawler()
